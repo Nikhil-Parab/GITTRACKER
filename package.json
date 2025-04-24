@@ -1,0 +1,12 @@
+{
+  "name": "GitTracker",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {},
+  "dependencies": {
+    "@types/node": "^22.14.1",
+    "@types/vscode": "^1.99.1",
+    "axios": "^1.8.4",
+    "vscode": "^1.1.34"
+  }
+}

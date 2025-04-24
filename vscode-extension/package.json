@@ -1,9 +1,9 @@
 {
-  "name": "gittracker",
+  "name": "GitTracker",
   "displayName": "GitTracker",
   "description": "Git conflict pre-warning system to detect potential merge conflicts before they happen",
   "version": "0.1.0",
-  "publisher": "YourNameHere",
+  "publisher": "Nikhil Parab",
   "engines": {
     "vscode": "^1.75.0"
   },
