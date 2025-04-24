@@ -11,7 +11,7 @@ export class GitTrackerStatusBar {
       vscode.StatusBarAlignment.Left,
       100
     );
-    this.statusBarItem.command = "gittracker.showConflicts";
+    this.statusBarItem.command = "GitTracker.showConflicts";
   }
 
   initialize(context: vscode.ExtensionContext): void {

@@ -20,11 +20,11 @@ bash
 
 # Install the package
 
-pip install gittracker
+pip install GitTracker
 
 # Start the server
 
-gittracker-server
+GitTracker-server
 Usage
 Open a Git repository in VS Code
 The GitTracker panel will appear in the VS Code sidebar
@@ -47,8 +47,8 @@ bash
 
 # Clone the repository
 
-git clone https://github.com/example/gittracker.git
-cd gittracker
+git clone https://github.com/example/GitTracker.git
+cd GitTracker
 
 # Install extension dependencies
 
@@ -66,7 +66,7 @@ bash
 
 # Start the Flask server
 
-python -m gittracker.server
+python -m GitTracker.server
 Architecture
 GitTracker consists of two main components:
 

@@ -2,29 +2,29 @@ import * as vscode from "vscode";
 
 export function registerCommands(
   context: vscode.ExtensionContext,
-  gitTracker: any
+  GitTracker: any
 ): void {
   // Register refresh command
   context.subscriptions.push(
-    vscode.commands.registerCommand("gittracker.refresh", async () => {
+    vscode.commands.registerCommand("GitTracker.refresh", async () => {
       vscode.window.showInformationMessage(
         "GitTracker: Refreshing conflict analysis..."
       );
-      await gitTracker.analyzeRepository();
+      await GitTracker.analyzeRepository();
     })
   );
 
   // Register show conflicts command
   context.subscriptions.push(
-    vscode.commands.registerCommand("gittracker.showConflicts", async () => {
-      await gitTracker.showConflicts();
+    vscode.commands.registerCommand("GitTracker.showConflicts", async () => {
+      await GitTracker.showConflicts();
     })
   );
 
   // Register compare changes command
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "gittracker.compareChanges",
+      "GitTracker.compareChanges",
       async (branch1: string, branch2: string, file: string) => {
         try {
           const axios = require("axios");
@@ -44,7 +44,7 @@ export function registerCommands(
           const path = require("path");
           const os = require("os");
 
-          const tempDir = path.join(os.tmpdir(), "gittracker");
+          const tempDir = path.join(os.tmpdir(), "GitTracker");
           if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir);
           }
@@ -82,15 +82,15 @@ export function registerCommands(
 
   // Register configure Python command
   context.subscriptions.push(
-    vscode.commands.registerCommand("gittracker.configurePython", async () => {
-      await gitTracker.configurePythonBackend();
+    vscode.commands.registerCommand("GitTracker.configurePython", async () => {
+      await GitTracker.configurePythonBackend();
     })
   );
 
   // Add a context menu command for branch items in the tree view
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "gittracker.viewBranchConflicts",
+      "GitTracker.viewBranchConflicts",
       (branchItem: any) => {
         vscode.window.showInformationMessage(
           `Viewing conflicts for branch: ${branchItem.label}`
@@ -103,7 +103,7 @@ export function registerCommands(
   // Add commands for conflict resolution suggestions
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "gittracker.suggestResolution",
+      "GitTracker.suggestResolution",
       async (conflict: any) => {
         try {
           const axios = require("axios");

@@ -1,66 +1,33 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GitTrackerStatusBar = void 0;
-const vscode = __importStar(require("vscode"));
-class GitTrackerStatusBar {
-    constructor() {
+var vscode = require("vscode");
+var GitTrackerStatusBar = /** @class */ (function () {
+    function GitTrackerStatusBar() {
         this.isAnalyzing = false;
         this.hasError = false;
         this.conflictCount = 0;
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-        this.statusBarItem.command = "gittracker.showConflicts";
+        this.statusBarItem.command = "GitTracker.showConflicts";
     }
-    initialize(context) {
+    GitTrackerStatusBar.prototype.initialize = function (context) {
         this.updateStatusBar();
         this.statusBarItem.show();
         context.subscriptions.push(this.statusBarItem);
-    }
-    setAnalyzing(analyzing) {
+    };
+    GitTrackerStatusBar.prototype.setAnalyzing = function (analyzing) {
         this.isAnalyzing = analyzing;
         this.updateStatusBar();
-    }
-    setError(error) {
+    };
+    GitTrackerStatusBar.prototype.setError = function (error) {
         this.hasError = error;
         this.updateStatusBar();
-    }
-    updateConflicts(count) {
+    };
+    GitTrackerStatusBar.prototype.updateConflicts = function (count) {
         this.conflictCount = count;
         this.updateStatusBar();
-    }
-    updateStatusBar() {
+    };
+    GitTrackerStatusBar.prototype.updateStatusBar = function () {
         if (this.isAnalyzing) {
             this.statusBarItem.text = "$(sync~spin) GitTracker: Analyzing...";
             this.statusBarItem.tooltip =
@@ -73,15 +40,16 @@ class GitTrackerStatusBar {
             return;
         }
         if (this.conflictCount > 0) {
-            this.statusBarItem.text = `$(warning) GitTracker: ${this.conflictCount} conflict${this.conflictCount === 1 ? "" : "s"}`;
-            this.statusBarItem.tooltip = `${this.conflictCount} potential merge conflict${this.conflictCount === 1 ? "" : "s"} detected`;
+            this.statusBarItem.text = "$(warning) GitTracker: ".concat(this.conflictCount, " conflict").concat(this.conflictCount === 1 ? "" : "s");
+            this.statusBarItem.tooltip = "".concat(this.conflictCount, " potential merge conflict").concat(this.conflictCount === 1 ? "" : "s", " detected");
             return;
         }
         this.statusBarItem.text = "$(check) GitTracker";
         this.statusBarItem.tooltip = "No potential conflicts detected";
-    }
-    dispose() {
+    };
+    GitTrackerStatusBar.prototype.dispose = function () {
         this.statusBarItem.dispose();
-    }
-}
+    };
+    return GitTrackerStatusBar;
+}());
 exports.GitTrackerStatusBar = GitTrackerStatusBar;

@@ -1,80 +1,69 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
     };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GitTrackerTreeProvider = void 0;
-const vscode = __importStar(require("vscode"));
-const path = __importStar(require("path"));
-class BranchItem extends vscode.TreeItem {
-    constructor(label, collapsibleState, conflicts) {
-        super(label, collapsibleState);
-        this.label = label;
-        this.collapsibleState = collapsibleState;
-        this.conflicts = conflicts;
-        this.tooltip = `Branch '${label}' has potential conflicts`;
-        this.description = `${conflicts.length} conflict${conflicts.length === 1 ? "" : "s"}`;
-        this.iconPath = new vscode.ThemeIcon("git-branch");
-        this.contextValue = "branch";
+var vscode = require("vscode");
+var path = require("path");
+var BranchItem = /** @class */ (function (_super) {
+    __extends(BranchItem, _super);
+    function BranchItem(label, collapsibleState, conflicts) {
+        var _this = _super.call(this, label, collapsibleState) || this;
+        _this.label = label;
+        _this.collapsibleState = collapsibleState;
+        _this.conflicts = conflicts;
+        _this.tooltip = "Branch '".concat(label, "' has potential conflicts");
+        _this.description = "".concat(conflicts.length, " conflict").concat(conflicts.length === 1 ? "" : "s");
+        _this.iconPath = new vscode.ThemeIcon("git-branch");
+        _this.contextValue = "branch";
+        return _this;
     }
-}
-class FileItem extends vscode.TreeItem {
-    constructor(label, filePath, conflicts) {
-        super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this.label = label;
-        this.filePath = filePath;
-        this.conflicts = conflicts;
-        this.tooltip = `File '${label}' has potential conflicts`;
-        this.description = `${conflicts.length} conflict${conflicts.length === 1 ? "" : "s"}`;
-        this.iconPath = new vscode.ThemeIcon("file");
-        this.contextValue = "file";
-        this.command = {
+    return BranchItem;
+}(vscode.TreeItem));
+var FileItem = /** @class */ (function (_super) {
+    __extends(FileItem, _super);
+    function FileItem(label, filePath, conflicts) {
+        var _this = _super.call(this, label, vscode.TreeItemCollapsibleState.Collapsed) || this;
+        _this.label = label;
+        _this.filePath = filePath;
+        _this.conflicts = conflicts;
+        _this.tooltip = "File '".concat(label, "' has potential conflicts");
+        _this.description = "".concat(conflicts.length, " conflict").concat(conflicts.length === 1 ? "" : "s");
+        _this.iconPath = new vscode.ThemeIcon("file");
+        _this.contextValue = "file";
+        _this.command = {
             command: "vscode.open",
             arguments: [vscode.Uri.file(filePath)],
             title: "Open File",
         };
+        return _this;
     }
-}
-class ConflictItem extends vscode.TreeItem {
-    constructor(conflict, filePath) {
-        super(`Lines ${conflict.lineStart}-${conflict.lineEnd}`, vscode.TreeItemCollapsibleState.None);
-        this.conflict = conflict;
-        this.filePath = filePath;
-        this.tooltip = `Conflict between branches '${conflict.branch1}' and '${conflict.branch2}'`;
-        this.description = `${conflict.branch1} ↔ ${conflict.branch2}`;
-        this.iconPath = new vscode.ThemeIcon("warning");
-        this.contextValue = "conflict";
-        this.command = {
+    return FileItem;
+}(vscode.TreeItem));
+var ConflictItem = /** @class */ (function (_super) {
+    __extends(ConflictItem, _super);
+    function ConflictItem(conflict, filePath) {
+        var _this = _super.call(this, "Lines ".concat(conflict.lineStart, "-").concat(conflict.lineEnd), vscode.TreeItemCollapsibleState.None) || this;
+        _this.conflict = conflict;
+        _this.filePath = filePath;
+        _this.tooltip = "Conflict between branches '".concat(conflict.branch1, "' and '").concat(conflict.branch2, "'");
+        _this.description = "".concat(conflict.branch1, " \u2194 ").concat(conflict.branch2);
+        _this.iconPath = new vscode.ThemeIcon("warning");
+        _this.contextValue = "conflict";
+        _this.command = {
             command: "vscode.open",
             arguments: [
                 vscode.Uri.file(filePath),
@@ -84,24 +73,26 @@ class ConflictItem extends vscode.TreeItem {
             ],
             title: "Go to Conflict",
         };
+        return _this;
     }
-}
-class GitTrackerTreeProvider {
-    constructor() {
+    return ConflictItem;
+}(vscode.TreeItem));
+var GitTrackerTreeProvider = /** @class */ (function () {
+    function GitTrackerTreeProvider() {
         var _a, _b;
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.conflicts = [];
         this.workspaceRoot = (_b = (_a = vscode.workspace.workspaceFolders) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.uri.fsPath;
     }
-    updateConflicts(conflicts) {
+    GitTrackerTreeProvider.prototype.updateConflicts = function (conflicts) {
         this.conflicts = conflicts;
         this._onDidChangeTreeData.fire();
-    }
-    getTreeItem(element) {
+    };
+    GitTrackerTreeProvider.prototype.getTreeItem = function (element) {
         return element;
-    }
-    getChildren(element) {
+    };
+    GitTrackerTreeProvider.prototype.getChildren = function (element) {
         if (!this.workspaceRoot) {
             return Promise.resolve([]);
         }
@@ -118,11 +109,11 @@ class GitTrackerTreeProvider {
             return this.getConflictItems(element.label, element.filePath);
         }
         return Promise.resolve([]);
-    }
-    getBranchItems() {
+    };
+    GitTrackerTreeProvider.prototype.getBranchItems = function () {
         // Group conflicts by branch
-        const branchMap = new Map();
-        this.conflicts.forEach((conflict) => {
+        var branchMap = new Map();
+        this.conflicts.forEach(function (conflict) {
             var _a, _b;
             // Add conflicts for both branches involved
             if (!branchMap.has(conflict.branch1)) {
@@ -135,18 +126,21 @@ class GitTrackerTreeProvider {
             (_b = branchMap.get(conflict.branch2)) === null || _b === void 0 ? void 0 : _b.push(conflict);
         });
         // Create branch items
-        const branches = [];
-        branchMap.forEach((branchConflicts, branchName) => {
+        var branches = [];
+        branchMap.forEach(function (branchConflicts, branchName) {
             branches.push(new BranchItem(branchName, vscode.TreeItemCollapsibleState.Collapsed, branchConflicts));
         });
         return Promise.resolve(branches);
-    }
-    getFileItems(branchName) {
+    };
+    GitTrackerTreeProvider.prototype.getFileItems = function (branchName) {
+        var _this = this;
         // Get conflicts for this branch
-        const branchConflicts = this.conflicts.filter((conflict) => conflict.branch1 === branchName || conflict.branch2 === branchName);
+        var branchConflicts = this.conflicts.filter(function (conflict) {
+            return conflict.branch1 === branchName || conflict.branch2 === branchName;
+        });
         // Group by file
-        const fileMap = new Map();
-        branchConflicts.forEach((conflict) => {
+        var fileMap = new Map();
+        branchConflicts.forEach(function (conflict) {
             var _a;
             if (!fileMap.has(conflict.file)) {
                 fileMap.set(conflict.file, []);
@@ -154,19 +148,20 @@ class GitTrackerTreeProvider {
             (_a = fileMap.get(conflict.file)) === null || _a === void 0 ? void 0 : _a.push(conflict);
         });
         // Create file items
-        const files = [];
-        fileMap.forEach((fileConflicts, filePath) => {
-            const fullPath = path.join(this.workspaceRoot || "", filePath);
+        var files = [];
+        fileMap.forEach(function (fileConflicts, filePath) {
+            var fullPath = path.join(_this.workspaceRoot || "", filePath);
             files.push(new FileItem(filePath, fullPath, fileConflicts));
         });
         return Promise.resolve(files);
-    }
-    getConflictItems(fileName, filePath) {
+    };
+    GitTrackerTreeProvider.prototype.getConflictItems = function (fileName, filePath) {
         // Get conflicts for this file
-        const fileConflicts = this.conflicts.filter((conflict) => conflict.file === fileName);
+        var fileConflicts = this.conflicts.filter(function (conflict) { return conflict.file === fileName; });
         // Create conflict items
-        const conflicts = fileConflicts.map((conflict) => new ConflictItem(conflict, filePath));
+        var conflicts = fileConflicts.map(function (conflict) { return new ConflictItem(conflict, filePath); });
         return Promise.resolve(conflicts);
-    }
-}
+    };
+    return GitTrackerTreeProvider;
+}());
 exports.GitTrackerTreeProvider = GitTrackerTreeProvider;

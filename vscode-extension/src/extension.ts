@@ -12,6 +12,7 @@ import { registerCommands } from "./commands";
 export class GitTracker {
   private context: vscode.ExtensionContext;
   private statusBar: GitTrackerStatusBar;
+
   private treeProvider: GitTrackerTreeProvider;
   private pythonProcess: cp.ChildProcess | undefined;
   private serverUrl: string = "http://localhost:5000";
@@ -44,7 +45,7 @@ export class GitTracker {
     this.statusBar.initialize(this.context);
 
     // Register tree view
-    vscode.window.createTreeView("gittracker-branches", {
+    vscode.window.createTreeView("GitTracker-branches", {
       treeDataProvider: this.treeProvider,
     });
 
@@ -61,7 +62,7 @@ export class GitTracker {
     await this.analyzeRepository();
 
     // Set up interval for periodic analysis
-    const config = vscode.workspace.getConfiguration("gittracker");
+    const config = vscode.workspace.getConfiguration("GitTracker");
     const frequency = config.get<number>("analysisFrequency", 300); // seconds
     this.analyzeInterval = setInterval(
       () => this.analyzeRepository(),
@@ -88,7 +89,7 @@ export class GitTracker {
 
   async startPythonBackend(): Promise<void> {
     try {
-      const config = vscode.workspace.getConfiguration("gittracker");
+      const config = vscode.workspace.getConfiguration("GitTracker");
       let pythonPath = config.get<string>("pythonPath", "");
 
       if (!pythonPath) {
@@ -130,7 +131,7 @@ export class GitTracker {
       // Start server
       this.pythonProcess = cp.spawn(
         pythonPath,
-        ["-m", "gittracker.server", "--workspace", this.workspaceRoot || ""],
+        ["-m", "GitTracker.server", "--workspace", this.workspaceRoot || ""],
         {
           cwd: backendPath,
           env: { ...process.env, PYTHONPATH: backendPath },
@@ -206,7 +207,7 @@ export class GitTracker {
         if (fileConflicts.length > 0) {
           // Trigger decoration update
           vscode.commands.executeCommand(
-            "gittracker.updateDecorations",
+            "GitTracker.updateDecorations",
             fileConflicts
           );
         }
@@ -227,7 +228,7 @@ export class GitTracker {
     });
 
     if (pythonPath) {
-      const config = vscode.workspace.getConfiguration("gittracker");
+      const config = vscode.workspace.getConfiguration("GitTracker");
       await config.update(
         "pythonPath",
         pythonPath,
@@ -247,7 +248,7 @@ export class GitTracker {
 
       // Show conflicts in a webview panel
       const panel = vscode.window.createWebviewPanel(
-        "gitTrackerConflicts",
+        "GitTrackerConflicts",
         "GitTracker: Potential Conflicts",
         vscode.ViewColumn.One,
         {
@@ -371,15 +372,15 @@ export class GitTracker {
   }
 }
 
-let gitTracker: GitTracker | undefined;
+let gitTrackerInstance: GitTracker | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
-  gitTracker = new GitTracker(context);
-  gitTracker.activate();
+  gitTrackerInstance = new GitTracker(context);
+  gitTrackerInstance.activate();
 }
 
 export function deactivate() {
-  if (gitTracker) {
-    gitTracker.deactivate();
+  if (gitTrackerInstance) {
+    gitTrackerInstance.deactivate();
   }
 }

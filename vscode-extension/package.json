@@ -1,5 +1,5 @@
 {
-  "name": "GitTracker",
+  "name": "gittracker",
   "displayName": "GitTracker",
   "description": "Git conflict pre-warning system to detect potential merge conflicts before they happen",
   "version": "0.1.0",
@@ -12,45 +12,49 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:GitTracker.refresh",
+    "onCommand:GitTracker.showConflicts",
+    "onCommand:GitTracker.compareChanges",
+    "onCommand:GitTracker.configurePython"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "gittracker.refresh",
+        "command": "GitTracker.refresh",
         "title": "GitTracker: Refresh Conflict Analysis"
       },
       {
-        "command": "gittracker.showConflicts",
+        "command": "GitTracker.showConflicts",
         "title": "GitTracker: Show Potential Conflicts"
       },
       {
-        "command": "gittracker.compareChanges",
+        "command": "GitTracker.compareChanges",
         "title": "GitTracker: Compare Branch Changes"
       },
       {
-        "command": "gittracker.configurePython",
+        "command": "GitTracker.configurePython",
         "title": "GitTracker: Configure Python Backend"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "gittracker-sidebar",
+          "id": "GitTracker-sidebar",
           "title": "GitTracker",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "gittracker-sidebar": [
+      "GitTracker-sidebar": [
         {
-          "id": "gittracker-branches",
+          "id": "GitTracker-branches",
           "name": "Branch Conflicts"
         },
         {
-          "id": "gittracker-files",
+          "id": "GitTracker-files",
           "name": "Affected Files"
         }
       ]
@@ -58,17 +62,17 @@
     "configuration": {
       "title": "GitTracker",
       "properties": {
-        "gittracker.pythonPath": {
+        "GitTracker.pythonPath": {
           "type": "string",
           "default": "",
           "description": "Path to Python executable for GitTracker backend"
         },
-        "gittracker.analysisFrequency": {
+        "GitTracker.analysisFrequency": {
           "type": "number",
           "default": 300,
           "description": "How often to analyze the repository (in seconds)"
         },
-        "gittracker.enableNotifications": {
+        "GitTracker.enableNotifications": {
           "type": "boolean",
           "default": true,
           "description": "Show notifications for new potential conflicts"

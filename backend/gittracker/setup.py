@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="gittracker",
+    name="GitTracker",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -9,10 +9,10 @@ setup(
         "flask-cors>=3.0.0",
     ],
     author="GitTracker Team",
-    author_email="info@gittracker.example.com",
+    author_email="info@GitTracker.example.com",
     description="Git conflict pre-warning system",
     keywords="git, conflicts, merge, vscode",
-    url="https://github.com/example/gittracker",
+    url="https://github.com/example/GitTracker",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -24,7 +24,7 @@ setup(
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "gittracker-server=gittracker.server:main",
+            "GitTracker-server=GitTracker.server:main",
         ],
     },
 )

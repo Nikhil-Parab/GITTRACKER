@@ -19,7 +19,7 @@ export function registerDecorations(context: vscode.ExtensionContext): void {
   // Register command to update decorations
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "gittracker.updateDecorations",
+      "GitTracker.updateDecorations",
       (fileConflicts: any[]) => {
         updateDecorations(fileConflicts);
       }
@@ -32,7 +32,7 @@ export function registerDecorations(context: vscode.ExtensionContext): void {
       if (editor) {
         // Get conflicts for current file
         vscode.commands.executeCommand(
-          "gittracker.getFileConflicts",
+          "GitTracker.getFileConflicts",
           editor.document.uri.fsPath
         );
       }
@@ -42,7 +42,7 @@ export function registerDecorations(context: vscode.ExtensionContext): void {
   // Register command to get conflicts for a file
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "gittracker.getFileConflicts",
+      "GitTracker.getFileConflicts",
       async (filePath: string) => {
         try {
           const axios = require("axios");

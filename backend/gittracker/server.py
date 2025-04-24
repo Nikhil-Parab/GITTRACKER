@@ -29,7 +29,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
-logger = logging.getLogger('gittracker-server')
+logger = logging.getLogger('GitTracker-server')
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -326,6 +326,11 @@ def stop_watching():
         return jsonify({
             'error': str(e)
         }), 500
+
+@app.route("/status", methods=["GET"])
+def status():
+    return jsonify({"status": "ready"}), 200
+
 
 @app.route('/state', methods=['GET'])
 def get_repository_state():
