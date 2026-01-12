@@ -76,6 +76,17 @@
           "type": "boolean",
           "default": true,
           "description": "Show notifications for new potential conflicts"
+        },
+        "GitTracker.aiProvider": {
+          "type": "string",
+          "default": "heuristic",
+          "enum": ["heuristic", "openai", "gemini"],
+          "description": "AI Provider for conflict resolution"
+        },
+        "GitTracker.aiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for AI Provider"
         }
       }
     }

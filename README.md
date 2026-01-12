@@ -1,81 +1,84 @@
-GitTracker
-GitTracker is a VS Code extension that helps developers identify potential merge conflicts before they happen. It analyzes your Git repository, identifies overlapping changes across branches, and warns you about potential conflicts.
+# GitTracker: AI-Powered Conflict Resolution for VS Code
 
-Features
-Real-time analysis of Git repositories
-Detection of potential merge conflicts across branches
-Visual diff view of conflicting changes
-Suggestions for conflict resolution
-Automatic monitoring of repository changes
-Installation
-VS Code Extension
-Open VS Code
-Go to Extensions (Ctrl+Shift+X)
-Search for "GitTracker"
-Click Install
-Python Backend
-The GitTracker extension requires a Python backend to perform Git analysis:
+GitTracker is a powerful VS Code extension that visualizes Git conflicts and uses advanced AI (Gemini/OpenAI) to suggest intelligent resolutions.
 
-bash
+## Features
 
-# Install the package
+- 🌳 **Visual Conflict Tree**: See all conflicts organized by file and severity.
+- 🤖 **AI-Powered Resolution**: Integrated AI analyzes code context to suggest optimal merges.
+- ✨ **One-Click Apply**: Accept AI suggestions instantly with a single button.
+- 📝 **Inline Diff View**: Compare branches side-by-side.
+- 🔒 **Secure**: API keys are stored locally in `.env` or VS Code Settings.
 
-pip install GitTracker
+## Requirements
 
-# Start the server
+- **VS Code**: Version 1.70.0 or higher.
+- **Python**: Version 3.8 or higher.
+- **Git**: Installed and available in PATH.
 
-GitTracker-server
-Usage
-Open a Git repository in VS Code
-The GitTracker panel will appear in the VS Code sidebar
-Click "Analyze Repository" to scan for potential conflicts
-Navigate the tree view to see conflicts by file or branch
-Click on a conflict to see a diff view and suggested resolution
-Commands
-GitTracker provides the following commands (available via Command Palette):
+## Installation
 
-GitTracker: Refresh - Re-analyze the repository for conflicts
-GitTracker: Show Conflicts - Display all detected conflicts
-GitTracker: Compare Changes - Compare specific files between branches
-GitTracker: Configure Python - Set up the Python backend
-Development
-Prerequisites
-Node.js and npm for the VS Code extension
-Python 3.8+ for the backend
-Setup
-bash
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/YourUsername/GitTracker.git
+    cd GitTracker
+    ```
 
-# Clone the repository
+2.  **Install Extension Dependencies**:
+    ```bash
+    npm install
+    ```
 
-git clone https://github.com/example/GitTracker.git
-cd GitTracker
+3.  **Install Backend Dependencies**:
+    Navigate to the `backend` folder and install Python requirements.
+    ```bash
+    cd backend
+    pip install -r requirements.txt
+    ```
 
-# Install extension dependencies
+## Configuration
 
-npm install
+### API Key Setup
+To use the AI resolution features, you need to provide an API key for either Google Gemini (Free Tier available) or OpenAI.
 
-# Install Python dependencies
+**Option 1: .env File (Recommended for Local Dev)**
+To keep your key secure and out of version control, create a `.env` file in the `backend/` directory:
 
-pip install -e .
-Running the Extension
-Open the project in VS Code
-Press F5 to start debugging
-In the new VS Code window, open a Git repository
-Running the Backend Manually
-bash
+```bash
+# In backend/.env
+GEMINI_API_KEY=your_actual_api_key_here
+```
 
-# Start the Flask server
+**Option 2: VS Code Settings**
+You can also configure it in VS Code:
+1.  Open Settings (`Ctrl+,`).
+2.  Search for `GitTracker`.
+3.  Enter your `Ai Api Key` and select your `Ai Provider`.
 
-python -m GitTracker.server
-Architecture
-GitTracker consists of two main components:
+### Security Note
+The `.env` file and `*.log` files are automatically ignored by Git (`.gitignore`) to prevent accidental leakage of sensitive information.
 
-VS Code Extension - Provides the UI and integrates with VS Code's extension API
-Python Backend - Performs Git operations and conflict analysis
-The components communicate via a REST API provided by the Flask server.
+## Usage
 
-Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+1.  Open a folder containing a Git repository in VS Code.
+2.  The **GitTracker** branch icon will appear in the Activity Bar (or Sidebar).
+3.  Click the icon to see a tree view of detected conflicts.
+4.  **Click on a conflict** to open the Conflict Resolution View.
+5.  Click **"Suggest Resolution (AI)"**.
+6.  Review the suggestion and click **"Apply Fix"** to automatically resolve the conflict.
 
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Running Locally (Development)
+
+1.  Open the project in VS Code.
+2.  Also ensure you have the `backend` dependencies installed (`pip install -r backend/requirements.txt`).
+3.  Press **F5** to start the Extension Development Host.
+4.  In the new window that opens, open a Git project with conflicts to test.
+
+## Troubleshooting
+
+- **404 Gemini Error**: This usually means the default model isn't available for your API key. GitTracker is smart enough to auto-detect available models (like `gemini-pro`, `gemini-1.5-flash`), so try restarting the extension/server if you see this.
+- **Backend Connection Failed**: Ensure Python is installed and `pip install -r requirements.txt` was run successfully.
+
+## License
+
+[MIT](LICENSE)

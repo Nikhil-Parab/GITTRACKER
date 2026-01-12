@@ -134,7 +134,7 @@ class GitTracker {
                 return;
             }
             // Start server
-            this.pythonProcess = cp.spawn(pythonPath, ["-m", "GitTracker.server", "--workspace", this.workspaceRoot || ""], {
+            this.pythonProcess = cp.spawn(pythonPath, ["-m", "gittracker.server", "--workspace", this.workspaceRoot || ""], {
                 cwd: backendPath,
                 env: { ...process.env, PYTHONPATH: backendPath },
             });
@@ -175,7 +175,7 @@ class GitTracker {
             this.statusBar.setAnalyzing(true);
             // Call backend API to analyze repository
             const response = await axios_1.default.post(`${this.serverUrl}/analyze`, {
-                workspace: this.workspaceRoot,
+                repo_path: this.workspaceRoot,
             });
             // Process results
             const conflicts = response.data.conflicts;
@@ -223,6 +223,14 @@ class GitTracker {
             const panel = vscode.window.createWebviewPanel("GitTrackerConflicts", "GitTracker: Potential Conflicts", vscode.ViewColumn.One, {
                 enableScripts: true,
             });
+            // Handle messages from the webview
+            panel.webview.onDidReceiveMessage(message => {
+                switch (message.command) {
+                    case 'suggestResolution':
+                        vscode.commands.executeCommand('GitTracker.suggestResolution', message.conflict);
+                        return;
+                }
+            }, undefined, this.context.subscriptions);
             // Generate HTML content for webview
             panel.webview.html = this.generateConflictsHtml(conflicts);
         }
@@ -241,7 +249,10 @@ class GitTracker {
             conflicts.forEach((conflict, index) => {
                 conflictItems += `
                 <div class="conflict-item">
-                    <h3>Conflict #${index + 1}: ${conflict.file}</h3>
+                    <div class="header">
+                        <h3>Conflict #${index + 1}: ${conflict.file}</h3>
+                        <button class="resolve-btn" onclick='suggestResolution(${JSON.stringify(conflict)})'>Suggest Resolution (AI)</button>
+                    </div>
                     <div class="branches">
                         <span>Between branches: <strong>${conflict.branch1}</strong> and <strong>${conflict.branch2}</strong></span>
                     </div>
@@ -306,7 +317,32 @@ class GitTracker {
                     font-style: italic;
                     color: var(--vscode-disabledForeground);
                 }
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .resolve-btn {
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                }
+                .resolve-btn:hover {
+                    background-color: var(--vscode-button-hoverBackground);
+                }
             </style>
+            <script>
+                const vscode = acquireVsCodeApi();
+                function suggestResolution(conflict) {
+                    vscode.postMessage({
+                        command: 'suggestResolution',
+                        conflict: conflict
+                    });
+                }
+            </script>
         </head>
         <body>
             <h2>GitTracker Potential Conflicts</h2>

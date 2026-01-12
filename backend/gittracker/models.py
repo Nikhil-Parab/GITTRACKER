@@ -20,8 +20,12 @@ class Conflict:
             self.id = f"{self.file}:{self.branch1}:{self.branch2}:{self.line_start}:{self.line_end}"
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation"""
-        return asdict(self)
+        """Convert to dictionary representation -- ensuring camelCase for frontend"""
+        d = asdict(self)
+        # Convert snake_case to camelCase manually for keys required by frontend
+        d['lineStart'] = d.pop('line_start')
+        d['lineEnd'] = d.pop('line_end')
+        return d
     
     def to_json(self) -> str:
         """Convert to JSON string"""
@@ -29,8 +33,13 @@ class Conflict:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Conflict':
-        """Create from dictionary"""
-        return cls(**data)
+        """Create from dictionary - handling camelCase from frontend"""
+        d = data.copy()
+        if 'lineStart' in d and 'line_start' not in d:
+             d['line_start'] = d.pop('lineStart')
+        if 'lineEnd' in d and 'line_end' not in d:
+             d['line_end'] = d.pop('lineEnd')
+        return cls(**d)
     
     @classmethod
     def from_json(cls, json_str: str) -> 'Conflict':

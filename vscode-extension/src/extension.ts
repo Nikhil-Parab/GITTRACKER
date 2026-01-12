@@ -131,7 +131,7 @@ export class GitTracker {
       // Start server
       this.pythonProcess = cp.spawn(
         pythonPath,
-        ["-m", "GitTracker.server", "--workspace", this.workspaceRoot || ""],
+        ["-m", "gittracker.server", "--workspace", this.workspaceRoot || ""],
         {
           cwd: backendPath,
           env: { ...process.env, PYTHONPATH: backendPath },
@@ -185,7 +185,7 @@ export class GitTracker {
 
       // Call backend API to analyze repository
       const response = await axios.post(`${this.serverUrl}/analyze`, {
-        workspace: this.workspaceRoot,
+        repo_path: this.workspaceRoot,
       });
 
       // Process results
@@ -246,7 +246,6 @@ export class GitTracker {
       const response = await axios.get(`${this.serverUrl}/conflicts`);
       const conflicts = response.data.conflicts;
 
-      // Show conflicts in a webview panel
       const panel = vscode.window.createWebviewPanel(
         "GitTrackerConflicts",
         "GitTracker: Potential Conflicts",
@@ -256,15 +255,79 @@ export class GitTracker {
         }
       );
 
-      // Generate HTML content for webview
+      panel.webview.onDidReceiveMessage(
+        async (message) => {
+          switch (message.command) {
+            case "suggestResolution":
+              // Call command and get result
+              const suggestion = await vscode.commands.executeCommand(
+                "GitTracker.suggestResolution",
+                message.conflict
+              );
+              
+              if (suggestion) {
+                // Send back to webview
+                panel.webview.postMessage({
+                    command: 'displaySuggestion',
+                    conflictId: message.conflictId,
+                    suggestion: suggestion
+                });
+              }
+              return;
+
+            case "applyResolution":
+                await this.applyConflictResolution(message.conflict, message.suggestion);
+                // Close webview or refresh? Refresh list
+                await this.analyzeRepository();
+                // Notify webview to update UI? simpler to just refresh the view or close
+                vscode.window.showInformationMessage("Conflict resolved!");
+                panel.dispose(); // Close panel as state has changed invalidating the view
+                // Re-open if there are remaining conflicts?
+                // await this.showConflicts();
+                return;
+          }
+        },
+        undefined,
+        this.context.subscriptions
+      );
+
       panel.webview.html = this.generateConflictsHtml(conflicts);
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to fetch conflicts: ${error}`);
     }
   }
 
+  async applyConflictResolution(conflict: any, suggestion: string): Promise<void> {
+      if (!this.workspaceRoot) return;
+
+      const filePath = path.join(this.workspaceRoot, conflict.file);
+      const uri = vscode.Uri.file(filePath);
+
+      const edit = new vscode.WorkspaceEdit();
+      // Replace the conflict range. 
+      // conflict.lineStart and lineEnd are 1-based.
+      // We want to replace from start of lineStart to end of lineEnd?
+      // Or typically just the lines.
+      // VS Code Range is 0-based.
+      const startLine = conflict.lineStart - 1;
+      const endLine = conflict.lineEnd; // -1 for 0-based, +1 to include the line... actually if it's inclusive 1-based, it's 0-based index.
+      // Example: Lines 1-2. 1-based. 
+      // 0-based: Line 0. Line 1.
+      // We want to replace Line 0 start to Line 2 start (exclusive of Line 2 content? No, inclusive).
+      // Let's assume inclusive.
+      // Range(startRes, startCol, endRow, endCol)
+      
+      const range = new vscode.Range(startLine, 0, endLine, 0); 
+      // Note: This replaces up to the *start* of the line *after* lineEnd.
+      
+      edit.replace(uri, range, suggestion + '\n'); // Add newline to match replaced block structure? 
+      // Suggestion usually doesn't have trailing newline? 
+      
+      await vscode.workspace.applyEdit(edit);
+      await vscode.workspace.saveAll(); // Save to persist
+  }
+
   private generateConflictsHtml(conflicts: any[]): string {
-    // HTML generation code for conflict details
     let conflictItems = "";
 
     if (conflicts.length === 0) {
@@ -272,28 +335,37 @@ export class GitTracker {
         '<div class="no-conflicts">No potential conflicts detected</div>';
     } else {
       conflicts.forEach((conflict, index) => {
+        // Create unique ID for this conflict 
+        const conflictId = `conflict-${index}`;
+        
         conflictItems += `
-                <div class="conflict-item">
-                    <h3>Conflict #${index + 1}: ${conflict.file}</h3>
+                <div class="conflict-item" id="${conflictId}">
+                    <div class="header">
+                        <h3>Conflict #${index + 1}: ${conflict.file}</h3>
+                        <button class="resolve-btn" onclick='suggestResolution(${JSON.stringify(conflict)}, "${conflictId}")'>Suggest Resolution (AI)</button>
+                    </div>
                     <div class="branches">
-                        <span>Between branches: <strong>${
-                          conflict.branch1
-                        }</strong> and <strong>${
-          conflict.branch2
-        }</strong></span>
+                        <span>Between branches: <strong>${conflict.branch1}</strong> and <strong>${conflict.branch2}</strong></span>
                     </div>
                     <div class="lines">
-                        <span>Lines: ${conflict.lineStart} - ${
-          conflict.lineEnd
-        }</span>
+                        <span>Lines: ${conflict.lineStart} - ${conflict.lineEnd}</span>
                     </div>
-                    <pre class="code"><code>${this.escapeHtml(
-                      conflict.content1
-                    )}</code></pre>
-                    <div class="separator">vs.</div>
-                    <pre class="code"><code>${this.escapeHtml(
-                      conflict.content2
-                    )}</code></pre>
+                    
+                    <div class="code-comparison">
+                        <pre class="code"><code>${this.escapeHtml(conflict.content1)}</code></pre>
+                        <div class="separator">vs.</div>
+                        <pre class="code"><code>${this.escapeHtml(conflict.content2)}</code></pre>
+                    </div>
+
+                    <div id="${conflictId}-suggestion" class="suggestion-box" style="display:none;">
+                        <h4>AI Suggestion:</h4>
+                        <div class="spinner" id="${conflictId}-spinner">Thinking...</div>
+                        <pre class="code suggestion-code" id="${conflictId}-code"></pre>
+                        <div class="actions">
+                            <button class="apply-btn" onclick='applyResolution("${conflictId}")'>Apply Fix</button>
+                            <button class="cancel-btn" onclick='cancelResolution("${conflictId}")'>Discard</button>
+                        </div>
+                    </div>
                 </div>
                 `;
       });
@@ -312,23 +384,15 @@ export class GitTracker {
                     color: var(--vscode-foreground);
                     padding: 20px;
                 }
-                h2 {
+                h2, h4 {
                     color: var(--vscode-editor-foreground);
-                    border-bottom: 1px solid var(--vscode-panel-border);
-                    padding-bottom: 10px;
                 }
                 .conflict-item {
                     margin-bottom: 30px;
                     padding: 15px;
                     background-color: var(--vscode-editor-background);
+                    border: 1px solid var(--vscode-panel-border);
                     border-radius: 5px;
-                }
-                .conflict-item h3 {
-                    margin-top: 0;
-                    color: var(--vscode-editorWarning-foreground);
-                }
-                .branches, .lines {
-                    margin-bottom: 10px;
                 }
                 .code {
                     background-color: var(--vscode-textCodeBlock-background);
@@ -336,21 +400,89 @@ export class GitTracker {
                     border-radius: 5px;
                     overflow: auto;
                     font-family: var(--vscode-editor-font-family);
-                    font-size: var(--vscode-editor-font-size);
+                    white-space: pre-wrap;
                 }
-                .separator {
-                    text-align: center;
-                    margin: 10px 0;
-                    font-weight: bold;
-                    color: var(--vscode-editorWarning-foreground);
+                .suggestion-box {
+                    margin-top: 15px;
+                    padding: 10px;
+                    background-color: var(--vscode-sideBar-background); /* Distinct background */
+                    border: 1px solid var(--vscode-focusBorder);
+                    border-radius: 5px;
                 }
-                .no-conflicts {
-                    padding: 20px;
-                    text-align: center;
-                    font-style: italic;
-                    color: var(--vscode-disabledForeground);
+                .suggestion-code {
+                    border-left: 3px solid var(--vscode-gitDecoration-addedResourceForeground);
                 }
+                .separator { text-align: center; margin: 10px 0; font-weight: bold; }
+                .header { display: flex; justify-content: space-between; align-items: center; }
+                
+                button {
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 6px 12px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                }
+                button:hover { background-color: var(--vscode-button-hoverBackground); }
+                
+                .apply-btn { background-color: var(--vscode-gitDecoration-addedResourceForeground); color: white; margin-right: 10px;}
+                .cancel-btn { background-color: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+                
+                .actions { margin-top: 10px; display: none; } 
             </style>
+            <script>
+                const vscode = acquireVsCodeApi();
+                
+                // Store conflicts map
+                const conflictData = {};
+
+                function suggestResolution(conflict, id) {
+                    conflictData[id] = { conflict: conflict, suggestion: null };
+                    
+                    // Show loading UI
+                    document.getElementById(id + '-suggestion').style.display = 'block';
+                    document.getElementById(id + '-spinner').style.display = 'block';
+                    document.getElementById(id + '-code').innerText = '';
+                    document.querySelector('#' + id + ' .actions').style.display = 'none';
+
+                    vscode.postMessage({
+                        command: 'suggestResolution',
+                        conflict: conflict,
+                        conflictId: id
+                    });
+                }
+
+                function applyResolution(id) {
+                    vscode.postMessage({
+                        command: 'applyResolution',
+                        conflict: conflictData[id].conflict,
+                        suggestion: conflictData[id].suggestion
+                    });
+                }
+
+                function cancelResolution(id) {
+                    document.getElementById(id + '-suggestion').style.display = 'none';
+                }
+
+                // Handle messages from extension
+                window.addEventListener('message', event => {
+                    const message = event.data;
+                    switch (message.command) {
+                        case 'displaySuggestion':
+                            const id = message.conflictId;
+                            // Store suggestion
+                            if (conflictData[id]) {
+                                conflictData[id].suggestion = message.suggestion;
+                            }
+                            
+                            // Update UI
+                            document.getElementById(id + '-spinner').style.display = 'none';
+                            document.getElementById(id + '-code').innerText = message.suggestion;
+                            document.querySelector('#' + id + ' .actions').style.display = 'block';
+                            break;
+                    }
+                });
+            </script>
         </head>
         <body>
             <h2>GitTracker Potential Conflicts</h2>

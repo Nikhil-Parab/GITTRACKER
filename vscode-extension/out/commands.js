@@ -90,9 +90,16 @@ function registerCommands(context, GitTracker) {
     // Add commands for conflict resolution suggestions
     context.subscriptions.push(vscode.commands.registerCommand("GitTracker.suggestResolution", async (conflict) => {
         try {
+            const config = vscode.workspace.getConfiguration("GitTracker");
+            const aiProvider = config.get("aiProvider", "heuristic");
+            const aiApiKey = config.get("aiApiKey", "");
             const axios = require("axios");
             const response = await axios.post("http://localhost:5000/suggest-resolution", {
                 conflict,
+                ai_config: {
+                    provider: aiProvider,
+                    api_key: aiApiKey
+                }
             });
             const suggestion = response.data.suggestion;
             // Show suggestion in a new editor

@@ -20,13 +20,20 @@ from gittracker.git_utils import GitUtils
 from gittracker.conflict_analyzer import ConflictAnalyzer
 from gittracker.repo_watcher import RepoWatcher
 from gittracker.models import Conflict, RepositoryState, BranchInfo
+from gittracker.ai_resolver import AIResolver
+
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout)
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('gittracker_server.log', mode='w')
     ]
 )
 logger = logging.getLogger('GitTracker-server')
@@ -228,10 +235,24 @@ def suggest_resolution():
             # This is a simplification; in practice, we'd need a more robust way to get the repo path
             repo_path = os.path.dirname(conflict.file)
         
-        analyzer = ConflictAnalyzer(repo_path)
+        # Get AI config from request if available
+        ai_config = data.get('ai_config', {})
+        api_key = ai_config.get('api_key')
+        provider = ai_config.get('provider', 'heuristic')
+
+        # Fallback to .env for Gemini if provided
+        if not api_key:
+            env_key = os.environ.get('GEMINI_API_KEY')
+            if env_key:
+                api_key = env_key
+                # If falling back to env key, ensure provider is set to Gemini (unless user forced something else)
+                if provider == 'heuristic':
+                     provider = 'gemini'
+        
+        resolver = AIResolver(api_key=api_key, provider=provider)
         
         # Generate suggested resolution
-        suggestion = analyzer.suggest_resolution(conflict)
+        suggestion = resolver.resolve(conflict, repo_path)
         
         return jsonify({
             'conflict': conflict.to_dict(),
@@ -240,6 +261,31 @@ def suggest_resolution():
     
     except Exception as e:
         logger.error(f"Error suggesting resolution: {e}", exc_info=True)
+@app.route('/conflicts', methods=['GET'])
+def get_conflicts():
+    """Get conflicts for the repository (from cache or new analysis)"""
+    repo_path = request.args.get('repo_path') or request.args.get('workspace')
+    
+    # Fallback to the single active watcher if we have one and no path provided
+    if not repo_path and len(repo_states) == 1:
+        repo_path = list(repo_states.keys())[0]
+
+    if not repo_path:
+        return jsonify({
+            'error': 'Repository path is required'
+        }), 400
+        
+    try:
+        # Return conflicts from cached state if available
+        if repo_path in repo_states:
+            conflicts = [c.to_dict() for c in repo_states[repo_path].conflicts]
+            return jsonify({'conflicts': conflicts})
+            
+        # If not in cache, return empty list (client should trigger analyze first)
+        return jsonify({'conflicts': []})
+        
+    except Exception as e:
+        logger.error(f"Error getting conflicts: {e}", exc_info=True)
         return jsonify({
             'error': str(e)
         }), 500

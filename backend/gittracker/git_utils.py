@@ -22,7 +22,9 @@ class GitUtils:
                 cwd=self.repo_path,
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
+                encoding='utf-8',
+                errors='replace'
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:

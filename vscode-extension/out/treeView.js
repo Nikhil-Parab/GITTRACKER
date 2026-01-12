@@ -75,14 +75,9 @@ class ConflictItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon("warning");
         this.contextValue = "conflict";
         this.command = {
-            command: "vscode.open",
-            arguments: [
-                vscode.Uri.file(filePath),
-                {
-                    selection: new vscode.Range(conflict.lineStart - 1, 0, conflict.lineEnd - 1, 0),
-                },
-            ],
-            title: "Go to Conflict",
+            command: "GitTracker.showConflicts",
+            arguments: [],
+            title: "View Conflict Details",
         };
     }
 }

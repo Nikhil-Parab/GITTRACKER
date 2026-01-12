@@ -16,28 +16,37 @@ class ConflictAnalyzer:
         self.conflict_threshold = 0.7  # Threshold for considering changes conflicting
     
     def analyze_all_branches(self) -> List[Conflict]:
-        """Analyze all branches for potential conflicts"""
-        branches = self.git.get_all_branches()
+        """Analyze current branch against all other branches for potential conflicts"""
         current_branch = self.git.get_current_branch()
+        branches = self.git.get_all_branches()
         
         conflicts = []
         
-        # Check each pair of branches for conflicts
-        for i, branch1 in enumerate(branches):
-            for branch2 in branches[i+1:]:
-                # Skip comparisons with the same branch or if one is a remote of the other
-                if branch1 == branch2:
-                    continue
-                
-                branch1_info = self.git.get_branch_tracking_info(branch1)
-                branch2_info = self.git.get_branch_tracking_info(branch2)
-                
-                if branch1_info.get('tracking') == branch2 or branch2_info.get('tracking') == branch1:
-                    continue
-                
-                # Find potential conflicts between these branches
-                branch_conflicts = self.find_conflicts_between_branches(branch1, branch2)
+        # Only compare current branch with others to improve performance
+        # detailed pairwise analysis can be done via specific commands if needed
+        for branch in branches:
+            # Skip if same branch or if it's the current branch (already selected as source)
+            if branch == current_branch:
+                continue
+            
+            # Additional optimization: ignore remote branches if local tracking branch exists?
+            # For now, we compare against all to be safe but efficient.
+            
+            branch_info = self.git.get_branch_tracking_info(current_branch)
+            other_info = self.git.get_branch_tracking_info(branch)
+            
+            # Skip if one tracks the other (fast-forward usually)
+            if branch_info.get('tracking') == branch or other_info.get('tracking') == current_branch:
+                continue
+            
+            # Find potential conflicts between current branch and this branch
+            try:
+                branch_conflicts = self.find_conflicts_between_branches(current_branch, branch)
                 conflicts.extend(branch_conflicts)
+            except Exception as e:
+                # Log error but continue with other branches
+                print(f"Error comparing {current_branch} and {branch}: {e}")
+                continue
         
         return conflicts
     

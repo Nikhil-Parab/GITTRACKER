@@ -106,27 +106,30 @@ export function registerCommands(
       "GitTracker.suggestResolution",
       async (conflict: any) => {
         try {
+          const config = vscode.workspace.getConfiguration("GitTracker");
+          const aiProvider = config.get<string>("aiProvider", "heuristic");
+          const aiApiKey = config.get<string>("aiApiKey", "");
+
           const axios = require("axios");
           const response = await axios.post(
             "http://localhost:5000/suggest-resolution",
             {
               conflict,
+              ai_config: {
+                provider: aiProvider,
+                api_key: aiApiKey
+              }
             }
           );
 
           const suggestion = response.data.suggestion;
+          return suggestion;
 
-          // Show suggestion in a new editor
-          const document = await vscode.workspace.openTextDocument({
-            content: suggestion,
-            language: "typescript", // Adjust based on file type
-          });
-
-          await vscode.window.showTextDocument(document);
         } catch (error) {
           vscode.window.showErrorMessage(
             `GitTracker: Failed to suggest resolution: ${error}`
           );
+          return null;
         }
       }
     )
